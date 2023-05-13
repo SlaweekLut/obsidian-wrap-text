@@ -1,6 +1,4 @@
-# It i![[wrap.gif]]
-
-![[unwrap.gif]]s so raw plugin
+# It is so raw plugin
 # Obsidian Wrap Text
 
 This is a plugin for wrapping text in HTML tags with a class.
