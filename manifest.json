@@ -1,6 +1,6 @@
 {
-	"id": "obsidian-wrapper-text",
-	"name": "Wrapper Text",
+	"id": "obsidian-wrap-text",
+	"name": "Wrap Text",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "This plugin allows you to wrap selected text in HTML tags and immediately add a class to them",

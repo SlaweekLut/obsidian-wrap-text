@@ -32,13 +32,13 @@ export default class WRAP_TEXT extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		this.addCommand({
-			id: 'presets-wrapper-text',
-			name: 'Presets wrapper for selected text',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				new PresetModal(this.app, editor).open();
-			}
-		});
+		// this.addCommand({
+		// 	id: 'presets-wrapper-text',
+		// 	name: 'Presets wrapper for selected text',
+		// 	editorCallback: (editor: Editor, view: MarkdownView) => {
+		// 		new PresetModal(this.app, editor).open();
+		// 	}
+		// });
 
 		this.addCommand({
 			id: 'wrapper-selected-text',
@@ -135,7 +135,7 @@ class ClassTagModal extends Modal {
 							wrapperClassArray.shift()
 							wrapperClass = wrapperClassArray.join(' ')
 						}
-						selectionText = `<${wrapperTag} class="${wrapperClass}">${this.editor.getSelection()}</${wrapperTag}>`
+						selectionText = `<${wrapperTag} class="${this.settings.prefix}${wrapperClass}">${this.editor.getSelection()}</${wrapperTag}>`
 					}));
 		} else {
 			new Setting(contentEl)
@@ -143,7 +143,7 @@ class ClassTagModal extends Modal {
 				.addText((text) =>
 					text.onChange((value) => {
 						wrapperTag = value
-						selectionText = `<${wrapperTag} class="${wrapperClass}">${this.editor.getSelection()}</${wrapperTag}>`
+						selectionText = `<${wrapperTag} class="${this.settings.prefix}${wrapperClass}">${this.editor.getSelection()}</${wrapperTag}>`
 					}));
 			
 			new Setting(contentEl)
@@ -151,7 +151,7 @@ class ClassTagModal extends Modal {
 				.addText((text) =>
 					text.onChange((value) => {
 						wrapperClass = value
-						selectionText = `<${wrapperTag} class="${wrapperClass}">${this.editor.getSelection()}</${wrapperTag}>`
+						selectionText = `<${wrapperTag} class="${this.settings.prefix}${wrapperClass}">${this.editor.getSelection()}</${wrapperTag}>`
 					}));
 		}
 
@@ -184,10 +184,11 @@ class SampleSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', {text: 'Settings'});
+		containerEl.createEl('h1', {text: 'Settings'});
 
 		new Setting(containerEl)
-			.setName('Prefix for class')
+			.setName('Prefix')
+			.setDesc('All classes will be prefixed')
 			.addText(text => text
 				.setPlaceholder('Enter your prefix')
 				.setValue(this.plugin.settings.prefix)
@@ -198,7 +199,9 @@ class SampleSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 		.setName('Emmet Format')
-		.setDesc('Emmet format is: span.hidden')
+		.setDesc(`
+			With emmet format you can write tag.class.class etc. \n
+			Without emmet format you write tag and class in two input.`)
 		.addToggle(toggle => toggle
 			.setValue(this.plugin.settings.emmetFormat)
 			.onChange(async (value) => {
