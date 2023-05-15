@@ -1,8 +1,16 @@
-/*
+.hidden-text {
+	filter: blur(5px);
+	cursor: pointer;
+	transition: .3s;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.hidden-text:hover {
+	filter: blur(0);
+}
 
-If your plugin does not need CSS, delete this file.
-
-*/
+.wrapper-text-example-text {
+	text-align: center;
+}
+.wrapper-text-example-text > p {
+	width: 100%;
+}

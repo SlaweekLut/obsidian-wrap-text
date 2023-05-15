@@ -5,11 +5,13 @@ import { App, Editor, MarkdownView, Modal, Plugin, PluginSettingTab, Setting } f
 interface SETTINGS {
 	prefix: string;
 	emmetFormat: boolean;
+	pressetsClass: Array<string>;
 }
 
 const DEFAULT_SETTINGS: SETTINGS = {
 	prefix: '',
 	emmetFormat: false,
+	pressetsClass: ['hidden-text']
 }
 
 function removeOpenTag(text: String) {
@@ -32,13 +34,13 @@ export default class WRAP_TEXT extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		// this.addCommand({
-		// 	id: 'presets-wrapper-text',
-		// 	name: 'Presets wrapper for selected text',
-		// 	editorCallback: (editor: Editor, view: MarkdownView) => {
-		// 		new PresetModal(this.app, editor).open();
-		// 	}
-		// });
+		this.addCommand({
+			id: 'presets-wrapper-text',
+			name: 'Presets wrapper for selected text',
+			editorCallback: (editor: Editor, view: MarkdownView) => {
+				new PresetModal(this.app, editor, this.settings).open();
+			}
+		});
 
 		this.addCommand({
 			id: 'wrapper-selected-text',
@@ -74,31 +76,49 @@ export default class WRAP_TEXT extends Plugin {
 	}
 }
 
+function convertClassnameToName(text: String) {
+	return text.split('-').map(word => word[0].toUpperCase() + word.slice(1)).join(' ');
+}
 class PresetModal extends Modal {
 	editor: Editor;
-	constructor(app: App, editor: Editor) {
+	settings: SETTINGS;
+	constructor(app: App, editor: Editor, settings: SETTINGS) {
 		super(app);
 		this.editor = editor;
+		this.settings = settings
 	}
 
 	onOpen() {
 		const {contentEl} = this;
+		let options: Record<string, string> = {};
+		let selectClass = 'hidden-text'
+		let partSelectedTextForExample = this.editor.getSelection().split(' ').slice(0, 10).join(' ')
 		contentEl.createEl("h1", { text: "Choose a preset" });
+		
+		this.settings.pressetsClass.forEach((className) => {
+			options[className] = convertClassnameToName(className)
+		})
+		
+		new Setting(contentEl)
+			.setName(convertClassnameToName('Select a preset'))
+			.addDropdown((btn) => btn
+				.addOptions(options)
+				.onChange((value) => {
+					selectClass = value
+					contentEl.find('.wrapper-text-example-text').children[0].setAttr('class', value)
+					// this.editor.replaceSelection(`<span class="${value}">${this.editor.getSelection()}</span>`);
+					// this.close()
+				}))
+		
+		let exampleText = contentEl.createEl("div", { cls: ["wrapper-text-example-text", "setting-item"] });
+		exampleText.createEl("p", { text: partSelectedTextForExample, cls: selectClass });
 
 		new Setting(contentEl)
 			.addButton((btn) => btn
-				.setButtonText("Hidden Text")
-				// .setCta()
+				.setButtonText("Done")
+				.setCta()
 				.onClick(() => {
-          this.editor.replaceSelection(`<span class="hidden-text">${this.editor.getSelection()}</span>`);
-					this.close();
-				}));
-		new Setting(contentEl)
-			.addButton((btn) => btn
-				.setButtonText("Red Highlight Text")
-				// .setCta()
-				.onClick(() => {
-					this.editor.replaceSelection(`<span class="red-highlight-text">${this.editor.getSelection()}</span>`);
+					this.editor.replaceSelection(`<span class="${selectClass}">${this.editor.getSelection()}</span>`);
 					this.close();
 				}));
 	}
@@ -208,5 +228,16 @@ class SampleSettingTab extends PluginSettingTab {
 				this.plugin.settings.emmetFormat = value;
 				await this.plugin.saveSettings();
 			}));
+
+		new Setting(containerEl)
+			.setName('Presets class')
+			.setDesc('Write classes separated by commas')
+			.addText(text => text
+				.setPlaceholder('Enter your classes')
+				.setValue(this.plugin.settings.pressetsClass.join(', '))
+				.onChange(async (value) => {
+					this.plugin.settings.pressetsClass = value.split(', ');
+					await this.plugin.saveSettings();
+				}));
 	}
 }
