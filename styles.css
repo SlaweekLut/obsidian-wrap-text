@@ -8,9 +8,10 @@
 	filter: blur(0);
 }
 
-.wrapper-text-example-text {
+.wrapper-text-example-text, .example-text {
 	text-align: center;
 }
+
 .wrapper-text-example-text > p {
 	width: 100%;
 }
