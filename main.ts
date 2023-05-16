@@ -6,12 +6,14 @@ interface SETTINGS {
 	prefix: string;
 	emmetFormat: boolean;
 	pressetsClass: Array<string>;
+	defaultTag: string;
 }
 
 const DEFAULT_SETTINGS: SETTINGS = {
 	prefix: '',
 	emmetFormat: false,
-	pressetsClass: ['hidden-text']
+	pressetsClass: ['hidden-text'],
+	defaultTag: 'span'
 }
 
 function removeOpenTag(text: String) {
@@ -24,8 +26,11 @@ function removeCloseTag(text: String) {
 
 function removeAllTags(text: String) {
 	let withoutOpenTag = removeOpenTag(text);
-	console.log(withoutOpenTag)
 	return removeCloseTag(withoutOpenTag);
+}
+
+function replaceSelectedText(editor: Editor, settings: SETTINGS, tag: String, className: String) {
+	editor.replaceSelection(`<${tag} class="${settings.prefix}${className}">${editor.getSelection()}</${tag}>`);
 }
 
 export default class WRAP_TEXT extends Plugin {
@@ -79,6 +84,7 @@ export default class WRAP_TEXT extends Plugin {
 function convertClassnameToName(text: String) {
 	return text.split('-').map(word => word[0].toUpperCase() + word.slice(1)).join(' ');
 }
+
 class PresetModal extends Modal {
 	editor: Editor;
 	settings: SETTINGS;
@@ -118,7 +124,7 @@ class PresetModal extends Modal {
 				.setButtonText("Done")
 				.setCta()
 				.onClick(() => {
-					this.editor.replaceSelection(`<span class="${selectClass}">${this.editor.getSelection()}</span>`);
+					replaceSelectedText(this.editor, this.settings, this.settings.defaultTag ? this.settings.defaultTag : 'span', selectClass);
 					this.close();
 				}));
 	}
@@ -128,6 +134,7 @@ class PresetModal extends Modal {
 		contentEl.empty();
 	}
 }
+
 class ClassTagModal extends Modal {
 	editor: Editor;
 	settings: SETTINGS;
@@ -140,13 +147,13 @@ class ClassTagModal extends Modal {
 
 	onOpen() {
 		const {contentEl} = this;
-		let selectionText = this.editor.getSelection();
 		let wrapperTag = ''
 		let wrapperClass = ''
 		contentEl.createEl("h1", { text: "Write tag and class name" });
 		if(this.settings.emmetFormat){
 			new Setting(contentEl)
 				.setName("tag.class")
+				.setDesc("or only .class")
 				.addText((text) =>
 					text.onChange((value) => {
 						wrapperTag = value.split('.')[0]
@@ -155,7 +162,6 @@ class ClassTagModal extends Modal {
 							wrapperClassArray.shift()
 							wrapperClass = wrapperClassArray.join(' ')
 						}
-						selectionText = `<${wrapperTag} class="${this.settings.prefix}${wrapperClass}">${this.editor.getSelection()}</${wrapperTag}>`
 					}));
 		} else {
 			new Setting(contentEl)
@@ -163,7 +169,6 @@ class ClassTagModal extends Modal {
 				.addText((text) =>
 					text.onChange((value) => {
 						wrapperTag = value
-						selectionText = `<${wrapperTag} class="${this.settings.prefix}${wrapperClass}">${this.editor.getSelection()}</${wrapperTag}>`
 					}));
 			
 			new Setting(contentEl)
@@ -171,7 +176,6 @@ class ClassTagModal extends Modal {
 				.addText((text) =>
 					text.onChange((value) => {
 						wrapperClass = value
-						selectionText = `<${wrapperTag} class="${this.settings.prefix}${wrapperClass}">${this.editor.getSelection()}</${wrapperTag}>`
 					}));
 		}
 
@@ -180,7 +184,7 @@ class ClassTagModal extends Modal {
 				.setButtonText("Done")
 				.setCta()
 				.onClick(() => {
-          this.editor.replaceSelection(selectionText);
+					replaceSelectedText(this.editor, this.settings, wrapperTag ? wrapperTag : this.settings.defaultTag, wrapperClass);
 					this.close();
 				}));
 	}
@@ -211,6 +215,16 @@ class SampleSettingTab extends PluginSettingTab {
 			.setDesc('All classes will be prefixed')
 			.addText(text => text
 				.setPlaceholder('Enter your prefix')
+				.setValue(this.plugin.settings.prefix)
+				.onChange(async (value) => {
+					this.plugin.settings.prefix = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Default tag')
+			.addText(text => text
+				.setPlaceholder('span')
 				.setValue(this.plugin.settings.prefix)
 				.onChange(async (value) => {
 					this.plugin.settings.prefix = value;
